@@ -1,0 +1,72 @@
+import cv2
+import numpy as np
+import RPi.GPIO as GPIO
+import time
+cap0 = cv2.VideoCapture(0)
+cap1 = cv2.VideoCapture(1)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(3, GPIO.OUT)
+p = GPIO.PWM(3, 50)
+51
+p.start(7.5)
+keypoints2 = 0
+keypoints3 = 0
+damageA=0
+p.ChangeDutyCycle(5)
+x = 1
+while(1):
+ #p.ChangeDutyCycle(7.5)
+ while (1):
+ _, frame0 = cap0.read()
+ _, frame1 = cap1.read()
+
+ gray0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2GRAY)
+ hsv0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2HSV)
+ gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+ hsv1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2HSV)
+52
+ lower_yellow = np.array([10,100,10])
+ upper_yellow = np.array([40,255,300])
+ mask0 = cv2.inRange(hsv0, lower_yellow, upper_yellow)
+ mask1 = cv2.inRange(hsv1, lower_yellow, upper_yellow)
+ res0 = cv2.bitwise_and(frame0,frame0, mask= mask0)
+ res1 = cv2.bitwise_and(frame1,frame1, mask= mask1)
+ detector = cv2.SimpleBlobDetector_create()
+
+ keypoints0 = detector.detect(res0)
+ keypoints1 = detector.detect(res1)
+ im_with_keypoints0 = cv2.drawKeypoints(res0, keypoints0, np.array([]),
+(0,255,200), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+ im_with_keypoints1 = cv2.drawKeypoints(res1, keypoints1, np.array([]),
+(0,255,200), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+ cv2.imshow('frame0',frame0)
+ cv2.imshow('keypoints0',im_with_keypoints0)
+53
+ cv2.imshow('frame1',frame1)
+ cv2.imshow('keypoints1',im_with_keypoints1)
+
+k = cv2.waitKey(30) & 0xFF
+ if k == 1:
+ break
+ for keypoint in keypoints0:
+ s=keypoint.size
+ if s>20:
+ print('Damaged Detected')
+ p.ChangeDutyCycle(8.5)
+ x=0
+ for keypoint in keypoints1:
+ s=keypoint.size
+ if s>20:
+ print('Damaged Detected')
+ p.ChangeDutyCycle(8.5)
+54
+ x=0
+ x = x+1
+ print(x)
+ if x > 7:
+ p.ChangeDutyCycle(4.5)
+ x = 0
+
+ print ()
+GPIO.setwarnings(False) 
